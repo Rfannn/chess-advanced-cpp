@@ -7,7 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_executable(chess src/main.cpp src/common.cpp)
+add_executable(chess src/main.cpp src/common.cpp src/Board.cpp)
 
 if(MSVC)
     target_compile_options(chess PRIVATE /W4 /utf-8)

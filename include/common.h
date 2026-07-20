@@ -4,8 +4,6 @@
 #include <string>
 using namespace std;
 
- 
-
 enum class Color {White,Black };
 enum class PieceType {Pawn,Knight, Bishop,Rook,Queen,King};
 
