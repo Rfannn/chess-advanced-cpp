@@ -1,8 +1,7 @@
-# Build artifacts
+#builds
 build/
 *.o
 *.exe
 *.out
-
-# Documentation
+#docs
 *.md
