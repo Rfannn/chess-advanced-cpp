@@ -19,7 +19,7 @@ public:
     Color getColor() const { return color; }
     PieceType getType() const { return type; }
     bool hasMoved() const { return moved; }
-    void setMoved() { moved = true; }
+    void markMoved() { moved = true; } // renamed from setMoved
 
     virtual char getSymbol() const = 0;
     virtual bool isValidMove(int fr, int fc, int tr, int tc, const Board& b) const = 0;

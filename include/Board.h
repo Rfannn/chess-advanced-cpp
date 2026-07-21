@@ -1,5 +1,4 @@
-#ifndef BOARD_H
-#define BOARD_H
+#pragma once
 
 #include "common.h"
 #include "Piece.h"
@@ -20,5 +19,3 @@ public:
     void setupBoard();
     void print() const;
 };
-
-#endif

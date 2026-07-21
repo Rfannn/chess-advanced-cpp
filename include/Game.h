@@ -4,6 +4,7 @@
 #include "Board.h"
 #include "Renderer.h"
 #include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -19,6 +20,10 @@ private:
     Board tryMove(int fr, int fc, int tr, int tc) const;
     void doPromotion(int tr, int tc);
     bool tryCastle(int fr, int fc, int tr, int tc);
+    
+    //bonus
+    void saveGame();
+    void loadGame();
 
 public:
     Game();

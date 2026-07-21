@@ -10,28 +10,32 @@ bool Game::isCheck(Color who) const {
     for(int r=0;r<8;r++){
         for(int c=0;c<8;c++){
             auto p=board.at(r,c);
-            if(p && p->getColor()==who && p->getType()==PieceType::King){kr=r;kc=c;break;}
+            if(p && p->getColor()==who && p->getType()==PieceType::King){
+                kr=r;kc=c;
+                break;
+            }
         }
         if(kr>=0) break;
     }
-    if(kr<0) return false;
+    if(kr<0) return false; 
 
     Color enemy=(who==Color::White)?Color::Black:Color::White;
-    for(int r=0;r<8;r++)
-        for(int c=0;c<8;c++){
-            auto p=board.at(r,c);
-            if(p && p->getColor()==enemy && p->isValidMove(r,c,kr,kc,board))
-                return true;
+    for(int r=0;r<8;r++) {
+      for(int c=0;c<8;c++) {
+        auto p=board.at(r,c);
+        if(p && p->getColor()==enemy) {
+            if(p->isValidMove(r,c,kr,kc,board)) return true;
         }
+      }
+    }
     return false;
 }
 
 bool Game::safeMove(int fr,int fc,int tr,int tc) const {
-    Board sim=board;
+    Board sim=board; 
     auto piece=sim.at(fr,fc);
     if(!piece) return false;
 
-    //
     if(piece->getType()==PieceType::Pawn && fc!=tc && sim.at(tr,tc)==nullptr){
         int capRow=(piece->getColor()==Color::White)?tr-1:tr+1;
         sim.setPiece(capRow,tc,nullptr);
@@ -56,13 +60,6 @@ bool Game::safeMove(int fr,int fc,int tr,int tc) const {
             }
         }
     return false;
-}
-
-Board Game::tryMove(int fr,int fc,int tr,int tc) const {
-    Board sim=board;
-    sim.setPiece(tr,tc,sim.at(fr,fc));
-    sim.setPiece(fr,fc,nullptr);
-    return sim;
 }
 
 bool Game::hasAnyMove(Color who) const {
@@ -93,12 +90,11 @@ void Game::doPromotion(int tr,int tc) {
         cout<<"1-4: ";cin>>choice;
     }
     shared_ptr<Piece> prom;
-    switch(choice){
-        case 1: prom=make_shared<Queen>(p->getColor());break;
-        case 2: prom=make_shared<Rook>(p->getColor());break;
-        case 3: prom=make_shared<Bishop>(p->getColor());break;
-        case 4: prom=make_shared<Knight>(p->getColor());break;
-    }
+    if (choice == 1) prom = make_shared<Queen>(p->getColor());
+    else if (choice == 2) prom = make_shared<Rook>(p->getColor());
+    else if (choice == 3) prom = make_shared<Bishop>(p->getColor());
+    else prom = make_shared<Knight>(p->getColor());
+    
     board.setPiece(tr,tc,prom);
 }
 
@@ -113,25 +109,66 @@ bool Game::tryCastle(int fr,int fc,int tr,int tc) {
         if(board.at(row,5) || board.at(row,6)) return false;
         auto rook=board.at(row,7);
         if(!rook || rook->getType()!=PieceType::Rook || rook->hasMoved()) return false;
-        board.setPiece(row,5,rook);
-        board.setPiece(row,7,nullptr);
-        board.setPiece(tr,tc,king);
-        board.setPiece(fr,fc,nullptr);
-        king->setMoved();
+        board.setPiece(row, 5, rook);
+        board.setPiece(row, 7, nullptr);
+        board.setPiece(tr, tc, king);
+        board.setPiece(fr, fc, nullptr);
+        king->markMoved();
         return true;
     }
     if(tc==2){
         if(board.at(row,1) || board.at(row,2) || board.at(row,3)) return false;
         auto rook=board.at(row,0);
         if(!rook || rook->getType()!=PieceType::Rook || rook->hasMoved()) return false;
-        board.setPiece(row,3,rook);
-        board.setPiece(row,0,nullptr);
-        board.setPiece(tr,tc,king);
-        board.setPiece(fr,fc,nullptr);
-        king->setMoved();
+        board.setPiece(row, 3, rook);
+        board.setPiece(row, 0, nullptr);
+        board.setPiece(tr, tc, king);
+        board.setPiece(fr, fc, nullptr);
+        king->markMoved();
         return true;
     }
     return false;
+}
+
+void Game::saveGame() {
+    ofstream out("chess_save.txt");
+    if(!out) { cout<<"save failed\n"; return; }
+    out << (turn == Color::White ? 0 : 1) << endl;
+    for(int r=0; r<8; r++) {
+        for(int c=0; c<8; c++) {
+            auto p = board.at(r,c);
+            if(!p) out << "-1 -1 ";
+            else out << (int)p->getType() << " " << (int)p->getColor() << " ";
+        }
+        out << endl;
+    }
+    cout<<"saved.\n";
+}
+
+void Game::loadGame() {
+    ifstream in("chess_save.txt");
+    if(!in) { cout<<"no save file\n"; return; }
+    int t; in >> t;
+    turn = (t == 0) ? Color::White : Color::Black;
+    for(int r=0; r<8; r++) {
+        for(int c=0; c<8; c++) {
+            int type, col;
+            in >> type >> col;
+            if(type == -1) board.setPiece(r, c, nullptr);
+            else {
+                Color pieceCol = (col == 0) ? Color::White : Color::Black;
+                shared_ptr<Piece> p;
+                if(type == 0) p = make_shared<Pawn>(pieceCol);
+                else if(type == 1) p = make_shared<Knight>(pieceCol);
+                else if(type == 2) p = make_shared<Bishop>(pieceCol);
+                else if(type == 3) p = make_shared<Rook>(pieceCol);
+                else if(type == 4) p = make_shared<Queen>(pieceCol);
+                else p = make_shared<King>(pieceCol);
+                board.setPiece(r, c, p);
+            }
+        }
+    }
+    cout<<"loaded.\n";
 }
 
 void Game::start() {
@@ -152,15 +189,18 @@ void Game::start() {
             view.showDraw();
             break;
         }
-        if(isCheck(turn))
-            view.showCheck(turn==Color::White?"White":"Black");
+        if(isCheck(turn)) view.showCheck(turn==Color::White?"White":"Black");
 
         string who=(turn==Color::White)?"White":"Black";
-        view.showTurn(who);
+        cout << who << "'s turn. move (or 'save'/'load'): ";
 
-        string in,in2;
+        string in;
         if(!(cin>>in)) break;
-        if(!(cin>>in2)) in+=in2;
+        if(in == "save") { saveGame(); continue; }
+        if(in == "load") { loadGame(); continue; }
+        
+        string in2;
+        if(!(cin>>in2)) break;
 
         string fromS,toS;
         if(in2.size()==2 && in.size()==2){fromS=in;toS=in2;}
@@ -179,10 +219,9 @@ void Game::start() {
         if(piece->getColor()!=turn){cout<<"not your piece\n";continue;}
         if(!piece->isValidMove(fr,fc,tr,tc,board)){cout<<"cant move there\n";continue;}
 
-        //castling
         if(tryCastle(fr,fc,tr,tc)){turn=enemy;continue;}
 
-        //en passant
+        // en passant
         if(piece->getType()==PieceType::Pawn && fc!=tc && board.at(tr,tc)==nullptr){
             int capRow=(piece->getColor()==Color::White)?tr-1:tr+1;
             board.setPiece(capRow,tc,nullptr);
@@ -192,10 +231,9 @@ void Game::start() {
 
         board.setPiece(tr,tc,board.at(fr,fc));
         board.setPiece(fr,fc,nullptr);
-        if(board.at(tr,tc)) board.at(tr,tc)->setMoved();
+        if(board.at(tr,tc)) board.at(tr,tc)->markMoved();
 
         doPromotion(tr,tc);
         turn=enemy;
     }
-    cout<<"\ngame over\n";
 }
