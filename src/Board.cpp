@@ -13,13 +13,23 @@ void Board::setupBoard() {
             grid[r][c] = nullptr;
 }
 
+shared_ptr<Piece> Board::at(int row, int col) const {
+    if (row < 0 || row > 7 || col < 0 || col > 7) return nullptr;
+    return grid[row][col];
+}
+
+void Board::setPiece(int row, int col, shared_ptr<Piece> p) {
+    if (row >= 0 && row <= 7 && col >= 0 && col <= 7)
+        grid[row][col] = p;
+}
+
 void Board::print() const {
     for (int r = 7; r >= 0; --r) {
         cout << (r+1) << " ";
         for (int c = 0; c < 8; ++c) {
             auto p = grid[r][c];
             if (!p) cout << ". ";
-            else cout << p << " ";
+            else cout << p->getSymbol() << " ";
         }
         cout << endl;
     }
