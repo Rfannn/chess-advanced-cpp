@@ -4,20 +4,25 @@
 #include "common.h"
 #include <string>
 
+class Board;
+
 class Piece {
 protected:
     Color color;
     PieceType type;
+    bool moved;
 
 public:
-    Piece(Color c, PieceType t) : color(c), type(t) {}
+    Piece(Color c, PieceType t) : color(c), type(t), moved(false) {}
     virtual ~Piece() = default;
 
     Color getColor() const { return color; }
     PieceType getType() const { return type; }
+    bool hasMoved() const { return moved; }
+    void setMoved() { moved = true; }
 
     virtual char getSymbol() const = 0;
-    virtual bool isValidMove(int fromR, int fromC, int toR, int toC, const class Board& b) const = 0;
+    virtual bool isValidMove(int fr, int fc, int tr, int tc, const Board& b) const = 0;
 };
 
 class Pawn : public Piece {
