@@ -16,7 +16,7 @@ bool Pawn::isValidMove(int fr, int fc, int tr, int tc, const Board& b) const {
     }
 
     //forward
-    if (tc == fc && dr == dir && b.at(tr, tc) == nullptr) return true;
+    if (tc== fc && dr==dir && b.at(tr,tc) == nullptr) return true;
 
     //double
     if (fr==startRow && tc==fc && dr==2*dir && b.at(tr, tc) ==nullptr && b.at(fr + dir, fc)==nullptr)
