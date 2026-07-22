@@ -2,6 +2,9 @@
 #include "Piece.h"
 #include <iostream>
 #include <cctype>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 Game::Game() : turn(Color::White), enPassantTarget(-1, -1) {}
 
@@ -106,9 +109,15 @@ void Game::doPromotion(int tr, int tc) {
     int target = (p->getColor() == Color::White) ? 7 : 0;
     if (tr != target) return;
 
-    cout << "promote to: 1)Q 2)R 3)B 4)N : ";
-    int choice;
-    if (!(cin >> choice)) { cin.clear(); cin.ignore(1000, '\n'); return; }
+    int choice = 0;
+    while (true) {
+        cout << "promote to: 1)Q 2)R 3)B 4)N : ";
+        if (cin >> choice && choice >= 1 && choice <= 4) break;
+        
+        cin.clear(); 
+        cin.ignore(1000, '\n'); 
+        cout << "invalid choice. try again.\n";
+    }
 
     shared_ptr<Piece> prom;
     if (choice == 1) prom = make_shared<Queen>(p->getColor());
@@ -227,19 +236,25 @@ void Game::start() {
         if (isCheck(turn)) view.showCheck(turn == Color::White ? "White" : "Black");
 
         string who = (turn == Color::White) ? "White" : "Black";
-        cout << who << "'s turn. move (or 'save'/'load'): ";
+        cout << who << "'s turn. move (or 'save'/'load'/'exit'): ";
 
-        string in;
-        if (!(cin >> in)) break;
+        //stop input blocking
+        string line;
+        getline(cin >> ws, line);
+        stringstream ss(line);
+        
+        string in, in2;
+        ss >> in;
+        if (!(ss >> in2)) {
+            in2 = "";
+        }
+
         if (in == "save") { saveGame(); continue; }
         if (in == "load") { loadGame(); continue; }
         if (in == "exit" || in == "quit") break;
 
-        string in2;
-        if (!(cin >> in2)) break;
-
         string fromS, toS;
-        if (in2.size() == 2 && in.size() == 2) { fromS = in; toS = in2; }
+        if (!in2.empty() && in.size() == 2 && in2.size() == 2) { fromS = in; toS = in2; }
         else if (in.size() == 4) { fromS = in.substr(0, 2); toS = in.substr(2, 2); }
         else { cout << "bad format\n"; continue; }
 
@@ -266,24 +281,25 @@ void Game::start() {
             }
         }
 
-        if (!piece->isValidMove(fr, fc, tr, tc, board)) { cout << "cant move there\n"; continue; }
+        //en passant bypass check
+        bool isEnPassant = false;
+        if (piece->getType() == PieceType::Pawn && fc != tc && board.at(tr, tc) == nullptr) {
+            if (enPassantTarget.row == tr && enPassantTarget.col == tc) {
+                isEnPassant = true;
+            }
+        }
+
+        // Only enforce standard validity if it's not a legal En Passant
+        if (!isEnPassant && !piece->isValidMove(fr, fc, tr, tc, board)) { 
+            cout << "cant move there\n"; 
+            continue; 
+        }
 
         //check friendlyfire
         auto target = board.at(tr, tc);
         if (target && target->getColor() == piece->getColor()) {
             cout << "cant capture own piece\n";
             continue;
-        }
-
-        //en passant check
-        bool isEnPassant = false;
-        if (piece->getType() == PieceType::Pawn && fc != tc && board.at(tr, tc) == nullptr) {
-            if (enPassantTarget.row == tr && enPassantTarget.col == tc) {
-                isEnPassant = true;
-            } else {
-                cout << "cant move there\n";
-                continue;
-            }
         }
 
         if (!safeMove(fr, fc, tr, tc)) { cout << "that leaves you in check\n"; continue; }
