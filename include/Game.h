@@ -3,6 +3,7 @@
 
 #include "Board.h"
 #include "Renderer.h"
+#include "common.h"
 #include <string>
 #include <fstream>
 
@@ -13,6 +14,7 @@ private:
     Board board;
     Renderer view;
     Color turn;
+    Position enPassantTarget;  // -1,-1 means none
 
     bool isCheck(Color who) const;
     bool hasAnyMove(Color who) const;
@@ -20,6 +22,8 @@ private:
     Board tryMove(int fr, int fc, int tr, int tc) const;
     void doPromotion(int tr, int tc);
     bool tryCastle(int fr, int fc, int tr, int tc);
+    bool squareAttacked(int r, int c, Color by) const;
+    void clearEnPassantTarget();
     
     //bonus
     void saveGame();

@@ -6,7 +6,7 @@ void Renderer::showWelcome() const {
     cout << "            CHESS        \n";
     cout << "==============================\n\n";
 }
-
+  
 void Renderer::showBoard(const Board& b) const {
     cout<<"\n   a b c d e f g h\n";
     cout<<"  +-----------------+\n";
@@ -21,24 +21,24 @@ void Renderer::showBoard(const Board& b) const {
                 cout<<" " << p->getSymbol() << " ";
             }
         }
-        cout<<"|" << (r+1) << "\n";
+        cout<<"|" << (r+1) <<"\n";
     }
     cout<< "  +-----------------+\n";
     cout<< "   a b c d e f g h\n\n";
 }
-
+//todo:turns
 void Renderer::showTurn(const string& who) const {
     cout << who << "'s turn. enter move (ex: e2 e4): ";
 }
 
 void Renderer::showCheck(const string& who) const {
-    cout << "!!! " << who << " is in check!\n";
+    cout << "!!!" << who << " is in check!\n";
 }
 
+ 
 void Renderer::showWin(const string& who) const {
     cout << "\n"<<who<< " wins!\n";
 }
-
 void Renderer::showDraw() const {
     cout << "\nstalemate! draw.\n";
 }

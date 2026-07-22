@@ -4,16 +4,17 @@
 #include <string>
 using namespace std;
 
-enum class Color {White,Black};
-enum class PieceType {Pawn,Knight, Bishop,Rook,Queen,King};
+enum class Color { White, Black };
+enum class PieceType { Pawn, Knight, Bishop, Rook, Queen, King };
 
 struct Position {
     int row;
     int col;
 
-    bool isValid() const{
-        return row>=0 && row<8 && col>=0 && col<8;
-    }
+    Position() : row(0), col(0) {}
+    Position(int r, int c) : row(r), col(c) {}
+
+    bool isValid() const { return row >= 0 && row < 8 && col >= 0 && col < 8; }
 
     string toString() const {
         string s;
