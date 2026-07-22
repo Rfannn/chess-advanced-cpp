@@ -4,4 +4,4 @@ build/
 *.exe
 *.out
 #docs
-*.md
+chess_save.txt
