@@ -1,15 +1,14 @@
-# advanced-cpp-chess
+# AP C++ Project - Chess
 
-console chess game for two players. made with c++17 for a uni project.
+console chess game for two players. made with c++17 for AP University Project.
 
-## what works
-- all pieces move correctly (i hope)
+## features
 - check detection, checkmate and stalemate
 - pawn promotion (ask for queen/rook/bishop/knight)
 - castling works (kingside and queenside)
-- en passant capture (was annoying to get right)
+- en passant capture
 - save/load game to a text file
-- no memory leaks (shared_ptr everywhere)
+- no memory leaks
 
 ## build
 ```bash
@@ -35,9 +34,4 @@ type `save` to save the game, `load` to load it back.
 - `Renderer.h/cpp`: board display
 
 ## struggles
-checkmate detection was the hardest part because you have to check every single legal move to see if any of them gets you out of check. en passant was also really confusing with the diagonal capture to an empty square and the timing of when it's allowed. castling took a while too because of all the conditions (can't be in check, squares must be empty, king/rook haven't moved).
-
-there are probably still some bugs but it works for normal games.
-
-## note
-this was done step by step over a few days, not all at once. some parts are cleaner than others.
+Checkmate detection was the hardest part because you have to check every single allowed move to see if any of them gets you out of check. En passant was also really confusing with the diagonal capture to an empty square and the timing of when it's allowed. Castling took a while too because of all the conditions (can't be in check, squares must be empty, king/rook haven't moved).
