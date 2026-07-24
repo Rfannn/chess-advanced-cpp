@@ -9,12 +9,15 @@
 
 using namespace std;
 
+//result of a move attempt
+enum class MoveResult { Ok, Illegal, Check, Checkmate, Stalemate, CastleOk, Promotion };
+
 class Game {
 private:
     Board board;
     Renderer view;
     Color turn;
-    Position enPassantTarget;  // -1,-1 means none
+    Position enPassantTarget;
 
     bool isCheck(Color who) const;
     bool hasAnyMove(Color who) const;
@@ -25,13 +28,21 @@ private:
     bool squareAttacked(int r, int c, Color by) const;
     void clearEnPassantTarget();
     
-    //bonus
     void saveGame();
     void loadGame();
 
 public:
     Game();
     void start();
+    
+    //for GUI
+    const Board& getBoard() const { return board; }
+    Color getTurn() const { return turn; }
+    MoveResult makeMove(int fr, int fc, int tr, int tc);
+    void doPromotionChoice(int tr, int tc, int choice);
+    bool inCheck() const { return isCheck(turn); }
+    bool isGameOver() const;
+    string getStatusMsg() const;
 };
 
 #endif

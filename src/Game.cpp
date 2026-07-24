@@ -8,6 +8,105 @@
 
 Game::Game() : turn(Color::White), enPassantTarget(-1, -1) {}
 
+//todo:game over check
+bool Game::isGameOver() const {
+    if (!hasAnyMove(turn)) return true;
+    return false;
+}
+
+string Game::getStatusMsg() const {
+    string who = (turn==Color::White) ? "White" : "Black";
+    if (isCheck(turn) && !hasAnyMove(turn)) {
+        string winner = (turn==Color::White) ? "Black" : "White";
+        return "Checkmate! " + winner + " wins!";
+    }
+    if (!isCheck(turn) && !hasAnyMove(turn)) {
+        return "Stalemate! Draw.";
+    }
+    if (isCheck(turn)) return who + " is in check!";
+    return who + "'s turn";
+}
+
+MoveResult Game::makeMove(int fr, int fc, int tr, int tc) {
+    auto piece = board.at(fr, fc);
+    if (!piece) return MoveResult::Illegal;
+    if (piece->getColor() != turn) return MoveResult::Illegal;
+
+    Color enemy = (turn == Color::White) ? Color::Black : Color::White;
+
+    //castling
+    if (piece->getType()==PieceType::King && abs(tc-fc)==2 && fr==tr) {
+        if (tryCastle(fr, fc, tr, tc)) {
+            clearEnPassantTarget();
+            turn = enemy;
+            if (isCheck(turn) && !hasAnyMove(turn)) return MoveResult::Checkmate;
+            if (!isCheck(turn) && !hasAnyMove(turn)) return MoveResult::Stalemate;
+            if (isCheck(turn)) return MoveResult::Check;
+            return MoveResult::CastleOk;
+        }
+        return MoveResult::Illegal;
+    }
+
+    //en passant
+    bool isEnPassant = false;
+    if (piece->getType()==PieceType::Pawn && fc!=tc && board.at(tr,tc)==nullptr) {
+        if (enPassantTarget.row==tr && enPassantTarget.col==tc) {
+            isEnPassant = true;
+        } else return MoveResult::Illegal;
+    }
+
+    if (!isEnPassant && !piece->isValidMove(fr, fc, tr, tc, board))
+        return MoveResult::Illegal;
+
+    auto target = board.at(tr, tc);
+    if (target && target->getColor() == piece->getColor())
+        return MoveResult::Illegal;
+
+    if (!safeMove(fr, fc, tr, tc)) return MoveResult::Illegal;
+
+    if (isEnPassant) {
+        int capRow = (piece->getColor()==Color::White) ? tr-1 : tr+1;
+        board.setPiece(capRow, tc, nullptr);
+    }
+
+    board.setPiece(tr, tc, board.at(fr, fc));
+    board.setPiece(fr, fc, nullptr);
+    if (board.at(tr,tc)) board.at(tr,tc)->setHasMoved();
+
+    clearEnPassantTarget();
+    if (piece->getType()==PieceType::Pawn && abs(tr-fr)==2) {
+        int tRow = (piece->getColor()==Color::White) ? tr-1 : tr+1;
+        enPassantTarget = Position(tRow, tc);
+    }
+
+    //promotion?
+    int promoRow = (piece->getColor()==Color::White) ? 7 : 0;
+    if (piece->getType()==PieceType::Pawn && tr==promoRow) {
+        return MoveResult::Promotion;
+    }
+
+    turn = enemy;
+    if (isCheck(turn) && !hasAnyMove(turn)) return MoveResult::Checkmate;
+    if (!isCheck(turn) && !hasAnyMove(turn)) return MoveResult::Stalemate;
+    if (isCheck(turn)) return MoveResult::Check;
+    return MoveResult::Ok;
+}
+
+void Game::doPromotionChoice(int tr, int tc, int choice) {
+    auto p = board.at(tr, tc);
+    if (!p || p->getType()!=PieceType::Pawn) return;
+    shared_ptr<Piece> prom;
+    if (choice==1) prom = make_shared<Queen>(p->getColor());
+    else if (choice==2) prom = make_shared<Rook>(p->getColor());
+    else if (choice==3) prom = make_shared<Bishop>(p->getColor());
+    else prom = make_shared<Knight>(p->getColor());
+    board.setPiece(tr, tc, prom);
+    
+    //switch turn after promotion
+    Color enemy = (turn==Color::White) ? Color::Black : Color::White;
+    turn = enemy;
+}
+
 void Game::clearEnPassantTarget() {
     enPassantTarget = Position(-1, -1);
 }
@@ -104,6 +203,7 @@ bool Game::hasAnyMove(Color who) const {
 }
 
 void Game::doPromotion(int tr, int tc) {
+    //asks user
     auto p = board.at(tr, tc);
     if (!p || p->getType() != PieceType::Pawn) return;
     int target = (p->getColor() == Color::White) ? 7 : 0;
@@ -111,21 +211,13 @@ void Game::doPromotion(int tr, int tc) {
 
     int choice = 0;
     while (true) {
-        cout << "promote to: 1)Q 2)R 3)B 4)N : ";
+        cout << "promote to: 1)Queen 2)Rook 3)Bishop 4)knight : ";
         if (cin >> choice && choice >= 1 && choice <= 4) break;
-        
-        cin.clear(); 
-        cin.ignore(1000, '\n'); 
-        cout << "invalid choice. try again.\n";
+        cin.clear();
+        cin.ignore(1000, '\n');
+        cout << "incorrect choice.try again.\n";
     }
-
-    shared_ptr<Piece> prom;
-    if (choice == 1) prom = make_shared<Queen>(p->getColor());
-    else if (choice == 2) prom = make_shared<Rook>(p->getColor());
-    else if (choice == 3) prom = make_shared<Bishop>(p->getColor());
-    else prom = make_shared<Knight>(p->getColor());
-
-    board.setPiece(tr, tc, prom);
+    doPromotionChoice(tr, tc, choice);
 }
 
 bool Game::tryCastle(int fr, int fc, int tr, int tc) {
@@ -139,7 +231,7 @@ bool Game::tryCastle(int fr, int fc, int tr, int tc) {
 
     if (tc == 6) { //kingside
         if (board.at(row, 5) || board.at(row, 6)) return false;
-        //check the squares that the king goes through (f and g files)
+        //checkthe squares that the king goes through(f and g files)
         if (squareAttacked(row, 5, enemy) || squareAttacked(row, 6, enemy)) return false;
         auto rook = board.at(row, 7);
         if (!rook || rook->getType() != PieceType::Rook || rook->getHasMoved()) return false;
@@ -153,7 +245,7 @@ bool Game::tryCastle(int fr, int fc, int tr, int tc) {
     }
     if (tc == 2) { // queenside
         if (board.at(row, 1) || board.at(row, 2) || board.at(row, 3)) return false;
-        //  check the squares that the king goes through(d and c files)
+        //  check the squares that the king goes through(d and c files )
         if (squareAttacked(row, 3, enemy) || squareAttacked(row, 2, enemy)) return false;
         auto rook = board.at(row, 0);
         if (!rook || rook->getType() != PieceType::Rook || rook->getHasMoved()) return false;
