@@ -23,7 +23,7 @@ else()
     target_compile_options(chess PRIVATE -Wall -Wextra)
 endif()
 
-#gui version (win32 api, no external libs)
+#gui version(win32 api)
 if(WIN32)
     add_executable(chess_gui WIN32
         src/main_gui.cpp
